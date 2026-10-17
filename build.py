@@ -17,15 +17,20 @@ def parse_md(p):
         entries.append({"id":em.group(1),"no":em.group(3),"text":em.group(4).strip()})
     return fm, entries
 def head(title, prefix):
-    return f'''<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{html.escape(title)}｜經典原文</title><link rel="stylesheet" href="{prefix}assets/style.css"></head><body><header class="top"><p class="kicker">經索</p><h1>經典原文</h1><nav class="crumbs"><a href="{prefix}index.html">首頁</a> · <a href="{prefix}search.html">搜尋</a></nav></header>'''
+    return f'''<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{html.escape(title)}｜經典原文</title><link rel="stylesheet" href="{prefix}assets/style.css"><link rel="manifest" href="{prefix}manifest.webmanifest"><meta name="theme-color" content="#1e1b16"></head><body><header class="top"><p class="kicker">經索</p><h1>經典原文</h1><nav class="crumbs"><a href="{prefix}index.html">首頁</a> · <a href="{prefix}search.html">搜尋</a></nav></header>'''
 def foot():
-    return f'''<footer><p>{html.escape(META["source_note"])}</p><p>供閱讀檢索，不是處方依據。本站原文由原站遷移，底本見各書頁面。</p></footer><script src="assets/app.js"></script></body></html>'''
+    return f'''<footer><p>{html.escape(META["source_note"])}</p><p>供閱讀檢索，不是處方依據。本站原文由原站遷移，底本見各書頁面。</p><p class="no-print">可加入主畫面方便診症時開啟：Android 用瀏覽器選單揀「加入主畫面」；iPhone／iPad 用「分享」再揀「加入主畫面」。</p></footer><script src="assets/app.js"></script></body></html>'''
 # fix script prefix per depth handled by replacing in caller
 def main():
     if OUT.exists(): shutil.rmtree(OUT)
     (OUT/"assets").mkdir(parents=True)
     shutil.copy(ROOT/"assets/style.css", OUT/"assets/style.css")
     shutil.copy(ROOT/"assets/app.js", OUT/"assets/app.js")
+    shutil.copy(ROOT/"assets/sw.js", OUT/"sw.js")
+    shutil.copy(ROOT/"assets/manifest.webmanifest", OUT/"manifest.webmanifest")
+    (OUT/"icons").mkdir(exist_ok=True)
+    shutil.copy(ROOT/"assets/icons/icon-192.png", OUT/"icons/icon-192.png")
+    shutil.copy(ROOT/"assets/icons/icon-512.png", OUT/"icons/icon-512.png")
     search_index=[]
     # homepage
     cards=[]
@@ -36,7 +41,7 @@ def main():
         cards.append(f'<a class="card" href="{b["id"]}/index.html"><h2>{html.escape(b["title"])}</h2><p class="muted">{html.escape(b["blurb"])}</p><p class="count">{b["entries"]} 條 · {b["sections"]} 篇</p></a>')
     home=head("經典原文","")+f'''<main><form class="searchbar" action="search.html"><input name="q" placeholder="桂枝湯、甘草、不寐、丹沙"><button>搜尋</button></form>
 <section><h2>我嘅加減</h2><p class="muted">只留喺呢部機。有連結嘅人睇唔到。可匯出／匯入備份。</p><ul class="clean" id="my-notes"></ul><button class="btn" id="export-notes">匯出加減</button> <button class="btn" id="import-notes">匯入加減</button><input type="file" id="import-file" accept="application/json" hidden></section>
-<section><h2>索引</h2><div class="grid"><a class="card" href="fangji/index.html"><h3>方劑總目</h3><p class="muted">按方名回查條文出處</p></a><a class="card" href="yao/index.html"><h3>藥物總目</h3><p class="muted">以《神農本草經》藥名為綱</p></a><a class="card" href="bingmen/index.html"><h3>病門索引</h3><p class="muted">以《臨證指南醫案》門類為綱</p></a></div></section><p class="muted">共 {len(META["books"])} 本書 · {total} 條</p><div class="grid">{''.join(cards)}</div></main>'''+foot().replace('src="assets/','src="')
+<section><h2>索引</h2><div class="grid"><a class="card" href="fangji/index.html"><h3>方劑總目</h3><p class="muted">按方名回查條文出處</p></a><a class="card" href="yao/index.html"><h3>藥物總目</h3><p class="muted">以《神農本草經》藥名為綱</p></a><a class="card" href="bingmen/index.html"><h3>病門索引</h3><p class="muted">以《臨證指南醫案》門類為綱</p></a><a class="card" href="clinical/index.html"><h3>臨床入口</h3><p class="muted">診症時查原文用；不作自動辨證</p></a></div></section><p class="muted">共 {len(META["books"])} 本書 · {total} 條</p><div class="grid">{''.join(cards)}</div></main>'''+foot()
     # homepage foot script already correct
     (OUT/"index.html").write_text(home,encoding="utf-8")
     # search page
@@ -78,7 +83,7 @@ def main():
             body=[head(f'{fm.get("section","")}｜{b["title"]}',"../"),
               f'<main><nav class="crumbs"><a href="../index.html">首頁</a> / <a href="index.html">{html.escape(b["title"])}</a> / {html.escape(fm.get("group",""))}</nav><h2>{html.escape(fm.get("section",""))}</h2><p class="muted">{html.escape(b["title"])} · {html.escape(fm.get("group",""))}</p><p>{prev_link}{next_link}</p>']
             for e in entries:
-                body.append(f'<article class="entry" id="{e["id"]}" data-id="{e["id"]}"><span class="no">{html.escape(e["no"])}</span>{html.escape(e["text"])}<button class="note-btn" type="button">加減</button><div class="note-area"></div></article>')
+                body.append(f'<article class="entry" id="{e["id"]}" data-id="{e["id"]}"><span class="no">{html.escape(e["no"])}</span>{html.escape(e["text"])}<button class="note-btn" type="button">加減</button><a class="print-link" href="../patient.html?id={e["id"]}">病人閱讀頁</a><div class="note-area"></div></article>')
             body.append(f'<p>{prev_link}{next_link}</p></main>')
             body.append(foot().replace('src="assets/','src="../assets/'))
             (OUT/b["id"]/f"{stem}.html").write_text(''.join(body),encoding="utf-8")
@@ -117,7 +122,7 @@ def main():
     for name in sorted(formulas):
         occ=formulas[name]
         links='；'.join(f'<a href="{entry_url(slug,stem,e["id"])}">{html.escape(collected[slug]["meta"]["title"])} · {html.escape(fm.get("group",""))} · {html.escape(fm.get("section",""))} 第{html.escape(e["no"])}條</a>' for slug,stem,fm,e in occ)
-        fparts.append(f'<div class="result"><strong>{html.escape(name)}</strong>（{len(occ)} 處）<br>{links}</div>')
+        fparts.append(f'<div class="result" id="f-{sorted(formulas).index(name)+1:03d}"><strong>{html.escape(name)}</strong>（{len(occ)} 處）<br>{links}</div>')
     fparts.append('</main>'); fparts.append(foot().replace('src="assets/','src="../assets/'))
     (OUT/"fangji"/"index.html").write_text(''.join(fparts),encoding="utf-8")
 
@@ -179,6 +184,56 @@ def main():
     bparts.append('</main>'); bparts.append(foot().replace('src="assets/','src="../assets/'))
     (OUT/"bingmen"/"index.html").write_text(''.join(bparts),encoding="utf-8")
     print(f"indexes: formulas={len(formulas)} drugs={len(drugs)} shuzheng_matched={drug_match_stats['shuzheng']} yian_drugs={drug_match_stats['yian_drugs']} yian_occ={drug_match_stats['yian_occ']} men={men_count} related={related_total}")
+
+
+    # ---------- 病人閱讀頁 ----------
+    pat=head("病人閱讀頁","")+'<main><h2>病人閱讀頁</h2><div id="patient-view"><p class="muted">載入緊…</p></div><p class="no-print"><button class="btn" onclick="window.print()">列印</button></p></main>'+foot()
+    (OUT/"patient.html").write_text(pat,encoding="utf-8")
+
+    # ---------- 臨床入口 ----------
+    (OUT/"clinical"/"men").mkdir(parents=True, exist_ok=True)
+    formula_order={name:i+1 for i,name in enumerate(sorted(formulas))}
+    drug_order={name:i+1 for i,name in enumerate(drugs)}
+    men_meta=[]
+    if "yian" in collected:
+        for mi,(fm,entries,stem) in enumerate(collected["yian"]["sections"],1):
+            men=fm.get("section","")
+            combined=" ".join(e["text"] for e in entries)
+            f_hits=[name for name in sorted(formulas) if name in combined]
+            d_hits=[name for name in drugs if len(name)>=2 and name in combined]
+            rel=[]
+            if len(men)>=2:
+                for slug in OLD_IDS:
+                    if slug=="yian" or slug not in collected: continue
+                    for fm2,entries2,stem2 in collected[slug]["sections"]:
+                        if men in fm2.get("section",""):
+                            rel.append(f'<a href="../../{slug}/{stem2}.html">{html.escape(collected[slug]["meta"]["title"])} · {html.escape(fm2.get("section",""))}</a>')
+            men_meta.append((mi,men,fm,entries,stem,f_hits,d_hits,rel))
+            mp=[head(men+"｜臨床入口","../../"),
+                f'<main><nav class="crumbs"><a href="../../index.html">首頁</a> / <a href="../index.html">臨床入口</a> / {html.escape(men)}</nav><h2>{html.escape(men)}</h2>',
+                f'<h3>原篇</h3><p><a href="../../yian/{stem}.html">{html.escape(fm.get("group",""))} · {html.escape(men)}</a>（{len(entries)} 案）</p>']
+            if rel: mp.append('<h3>相關篇目（篇題比對）</h3><p>'+'；'.join(rel)+'</p>')
+            mp.append('<h3>方劑總目命中</h3>')
+            if f_hits: mp.append('<ul class="clean">'+''.join(f'<li><a href="../../fangji/index.html#f-{formula_order[n]:03d}">{html.escape(n)}</a></li>' for n in f_hits)+'</ul>')
+            else: mp.append('<p class="muted">呢一門原文未見方劑總目方名出現。</p>')
+            mp.append('<h3>藥物總目命中</h3>')
+            if d_hits: mp.append('<ul class="clean">'+''.join(f'<li><a href="../../yao/{drug_order[n]:03d}.html">{html.escape(n)}</a></li>' for n in d_hits)+'</ul>')
+            else: mp.append('<p class="muted">呢一門原文未見藥物總目藥名出現。</p>')
+            mp.append('<p class="muted">以上只係索引比對結果，唔係辨證或處方建議。供閱讀檢索，不是處方依據。</p></main>')
+            mp.append(foot().replace('src="assets/','src="../../assets/'))
+            (OUT/"clinical"/"men"/f"{mi:03d}.html").write_text(''.join(mp),encoding="utf-8")
+    cparts=[head("臨床入口","../"),
+      '<main><nav class="crumbs"><a href="../index.html">首頁</a> / 臨床入口</nav><h2>臨床入口</h2>',
+      '<p>呢一頁係畀醫師診症時查返原文用嘅工作入口：幫你快啲搵返經典條文、方名同藥名出處。佢唔做自動辨證，唔會開方，亦唔會畀劑量；最後判斷要由醫師面診評估之後自己決定。</p>',
+      '<p><strong>切勿喺呢度輸入任何可以識別病人身份嘅資料</strong>（例如姓名、聯絡方法、身份證號碼）。呢度只應該放醫師自己嘅工作筆記（加減），而加減只存喺呢部機嘅瀏覽器入面，唔會上傳去任何伺服器。</p>',
+      '<h3>覆診快速開啟（我的加減，按最後修改排先）</h3><ul class="clean" id="clinical-notes"></ul><button class="btn" id="export-notes">匯出加減</button> <button class="btn" id="import-notes">匯入加減</button><input type="file" id="import-file" accept="application/json" hidden>',
+      '<h3>病門入口</h3><p class="muted">以《臨證指南醫案》112 門為綱，一頁睇晒原篇、相關篇目、方劑總目命中同藥物總目命中。全部只係現有索引嘅比對結果。</p><ul class="clean">']
+    for mi,men,fm,entries,stem,f_hits,d_hits,rel in men_meta:
+        cparts.append(f'<li><a href="men/{mi:03d}.html">{html.escape(men)}</a> <span class="muted">{html.escape(fm.get("group",""))} · {len(entries)} 案 · 方 {len(f_hits)} · 藥 {len(d_hits)}</span></li>')
+    cparts.append('</ul><p class="muted">可加入主畫面方便診症時開啟：Android 用瀏覽器選單揀「加入主畫面」；iPhone／iPad 用「分享」再揀「加入主畫面」。</p></main>')
+    cparts.append(foot().replace('src="assets/','src="../assets/'))
+    (OUT/"clinical"/"index.html").write_text(''.join(cparts),encoding="utf-8")
+    print(f"clinical: men={len(men_meta)}")
 
     (OUT/"search-index.json").write_text(json.dumps(search_index,ensure_ascii=False),encoding="utf-8")
     print(f"built {len(search_index)} entries, {len(META['books'])} books -> {OUT}")
