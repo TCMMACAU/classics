@@ -248,6 +248,120 @@
    ],
    "sections": 535,
    "entries": 1021
+  },
+  {
+   "id": "nanjing",
+   "title": "難經",
+   "blurb": "八十一難，按原難分篇。",
+   "author": "原題扁鵲（秦越人）著，成書於東漢以前（維基文庫題解）",
+   "base_edition": "維基文庫《黃帝八十一難經》本",
+   "source_name": "維基文庫（Wikisource）",
+   "source_url": "https://zh.wikisource.org/wiki/難經",
+   "groups": [
+    "八十一難"
+   ],
+   "sections": 81,
+   "entries": 239
+  },
+  {
+   "id": "wenrelun",
+   "title": "溫熱論",
+   "blurb": "葉桂述，門人顧景文錄。按編號條文。",
+   "author": "清・葉桂（葉天士）述，門人顧景文錄",
+   "base_edition": "維基文庫華岫雲本；原頁首有現代編者「總論」及未編號重錄段落，非葉氏原文，不錄；僅按原頁編號條文一至三十七轉錄",
+   "source_name": "維基文庫（Wikisource）",
+   "source_url": "https://zh.wikisource.org/wiki/溫熱論",
+   "groups": [
+    "全篇"
+   ],
+   "sections": 1,
+   "entries": 37
+  },
+  {
+   "id": "shire",
+   "title": "濕熱病篇",
+   "blurb": "薛雪著、自注，《溫熱經緯》收錄為濕熱病篇。共四十六條。",
+   "author": "清・薛雪（薛生白）著、自注",
+   "base_edition": "維基文庫《濕熱條辨》本（《溫熱經緯》收錄為「濕熱病篇」）",
+   "source_name": "維基文庫（Wikisource）",
+   "source_url": "https://zh.wikisource.org/wiki/濕熱條辨",
+   "groups": [
+    "全篇"
+   ],
+   "sections": 46,
+   "entries": 215
+  },
+  {
+   "id": "maijing",
+   "title": "脈經",
+   "blurb": "王叔和著。十卷，按原卷分篇。",
+   "author": "晉・王叔和",
+   "base_edition": "維基文庫《脈經》本（十卷；該本標示校訂程度 Textquality 25%，按原卷轉錄）",
+   "source_name": "維基文庫（Wikisource）",
+   "source_url": "https://zh.wikisource.org/wiki/脈經",
+   "groups": [
+    "卷首",
+    "脈經卷一",
+    "脈經卷二",
+    "脈經卷三",
+    "脈經卷四",
+    "脈經卷五",
+    "脈經卷六",
+    "脈經卷七",
+    "脈經卷八",
+    "脈經卷九",
+    "脈經卷十"
+   ],
+   "sections": 106,
+   "entries": 1211
+  },
+  {
+   "id": "zhenjiu",
+   "title": "針灸大成",
+   "blurb": "楊繼洲著。按維基文庫本十二卷分篇。",
+   "author": "明・楊繼洲（楊濟時）",
+   "base_edition": "維基文庫《針灸大成》本（十二卷）；原頁有若干生僻字以 Unicode 私用區碼儲存、原站亦標示未能識別，轉錄以「□」標示缺字，詳見報告",
+   "source_name": "維基文庫（Wikisource）",
+   "source_url": "https://zh.wikisource.org/wiki/針灸大成",
+   "groups": [
+    "卷一",
+    "卷二",
+    "卷三",
+    "卷四",
+    "卷五",
+    "卷六",
+    "卷七",
+    "卷八",
+    "卷九",
+    "卷十",
+    "卷十一",
+    "卷十二"
+   ],
+   "sections": 369,
+   "entries": 421
+  },
+  {
+   "id": "beiyao",
+   "title": "本草備要",
+   "blurb": "汪昂著。按部類分篇，藥物逐品。",
+   "author": "清・汪昂（汪訒庵）",
+   "base_edition": "維基文庫《本草備要》本；該本為簡體轉錄，入站時以 OpenCC 機械轉為繁體，內容不改",
+   "source_name": "維基文庫（Wikisource）",
+   "source_url": "https://zh.wikisource.org/wiki/本草備要",
+   "groups": [
+    "卷首",
+    "藥性總義",
+    "草部",
+    "木部",
+    "果部",
+    "谷菜部",
+    "金石水土部",
+    "禽獸部",
+    "鱗介魚蟲部",
+    "人部"
+   ],
+   "sections": 14,
+   "entries": 535
   }
  ]
 }
