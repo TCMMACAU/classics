@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(exp){
     const list=document.getElementById('my-notes'); const notes=loadNotes(); const ids=Object.keys(notes);
     list.innerHTML=ids.length? ids.map(id=>'<li><code>'+id+'</code>：'+notes[id].replace(/</g,'&lt;')+'</li>').join('') : '<li class="muted">暫時未有加減。</li>';
-    exp.onclick=()=>{const blob=new Blob([JSON.stringify(loadNotes(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='classics-notes.json';a.click();};
+    exp.onclick=()=>{const blob=new Blob([JSON.stringify(loadNotes(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='加減備份.json';a.click();};
     const imp=document.getElementById('import-notes'), file=document.getElementById('import-file');
     if(imp){imp.onclick=()=>file.click(); file.onchange=()=>{const f=file.files[0]; if(!f)return; f.text().then(t=>{try{const obj=JSON.parse(t); if(typeof obj!=='object'||Array.isArray(obj))throw 0; saveNotes(obj); location.reload();}catch(e){alert('檔案格式唔啱');}});};}
   }

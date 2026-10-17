@@ -35,7 +35,7 @@ def main():
         total+=b["entries"]
         cards.append(f'<a class="card" href="{b["id"]}/index.html"><h2>{html.escape(b["title"])}</h2><p class="muted">{html.escape(b["blurb"])}</p><p class="count">{b["entries"]} 條 · {b["sections"]} 篇</p></a>')
     home=head("經典原文","")+f'''<main><form class="searchbar" action="search.html"><input name="q" placeholder="桂枝湯、甘草、不寐、丹沙"><button>搜尋</button></form>
-<section><h2>我嘅加減</h2><p class="muted">只留喺呢部機。有連結嘅人睇唔到。可匯出／匯入備份。</p><ul class="clean" id="my-notes"></ul><button class="btn" id="export-notes">匯出加減 JSON</button> <button class="btn" id="import-notes">匯入加減 JSON</button><input type="file" id="import-file" accept="application/json" hidden></section>
+<section><h2>我嘅加減</h2><p class="muted">只留喺呢部機。有連結嘅人睇唔到。可匯出／匯入備份。</p><ul class="clean" id="my-notes"></ul><button class="btn" id="export-notes">匯出加減</button> <button class="btn" id="import-notes">匯入加減</button><input type="file" id="import-file" accept="application/json" hidden></section>
 <p class="muted">共 {len(META["books"])} 本書 · {total} 條</p><div class="grid">{''.join(cards)}</div></main>'''+foot().replace('src="assets/','src="')
     # homepage foot script already correct
     (OUT/"index.html").write_text(home,encoding="utf-8")
