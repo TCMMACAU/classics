@@ -17,7 +17,7 @@ def parse_md(p):
         entries.append({"id":em.group(1),"no":em.group(3),"text":em.group(4).strip()})
     return fm, entries
 def head(title, prefix):
-    return f'''<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{html.escape(title)}｜經典原文</title><link rel="stylesheet" href="{prefix}assets/style.css"><link rel="manifest" href="{prefix}manifest.webmanifest"><meta name="theme-color" content="#1e1b16"></head><body><header class="top"><p class="kicker">經索</p><h1>經典原文</h1><nav class="crumbs"><a href="{prefix}index.html">首頁</a> · <a href="{prefix}search.html">搜尋</a></nav></header>'''
+    return f'''<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{html.escape(title)}｜經典原文</title><link rel="stylesheet" href="{prefix}assets/style.css"><link rel="manifest" href="{prefix}manifest.webmanifest"><meta name="theme-color" content="#1e1b16"><script data-goatcounter="https://tcmmacau.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script></head><body><header class="top"><p class="kicker">經索</p><h1>經典原文</h1><nav class="crumbs"><a href="{prefix}index.html">首頁</a> · <a href="{prefix}search.html">搜尋</a></nav></header>'''
 def foot():
     return f'''<footer><p>{html.escape(META["source_note"])}</p><p>供閱讀檢索，不是處方依據。本站原文由原站遷移，底本見各書頁面。</p><p class="no-print">可加入主畫面方便診症時開啟：Android 用瀏覽器選單揀「加入主畫面」；iPhone／iPad 用「分享」再揀「加入主畫面」。</p></footer><script src="assets/app.js"></script></body></html>'''
 # fix script prefix per depth handled by replacing in caller
