@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Build static site into docs/ from books/*/ *.md + books.json (stdlib only)."""
-import json, os, re, html, shutil, pathlib
+import json, os, re, html, shutil, pathlib, urllib.parse
 ROOT=pathlib.Path(__file__).parent
 OUT=ROOT/"docs"
 META=json.loads((ROOT/"books.json").read_text(encoding="utf-8"))
@@ -19,7 +19,7 @@ def parse_md(p):
 def head(title, prefix):
     return f'''<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{html.escape(title)}｜經典原文</title><link rel="stylesheet" href="{prefix}assets/style.css"><link rel="manifest" href="{prefix}manifest.webmanifest"><meta name="theme-color" content="#1e1b16"><script data-goatcounter="https://tcmmacau.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script></head><body><header class="top"><p class="kicker">經索</p><h1>經典原文</h1><nav class="crumbs"><a href="{prefix}index.html">首頁</a> · <a href="{prefix}search.html">搜尋</a></nav></header>'''
 def foot():
-    return f'''<footer><p>{html.escape(META["source_note"])}</p><p>供閱讀檢索，不是處方依據。本站原文由原站遷移，底本見各書頁面。</p><p class="no-print">可加入主畫面方便診症時開啟：Android 用瀏覽器選單揀「加入主畫面」；iPhone／iPad 用「分享」再揀「加入主畫面」。</p></footer><script src="assets/app.js"></script></body></html>'''
+    return f'''<footer><p>{html.escape(META["source_note"])}</p><p>供閱讀檢索，不是處方依據。本站原文由原站遷移，底本見各書頁面。</p><p class="no-print">可加入主畫面方便診症時開啟：Android 用瀏覽器選單揀「加入主畫面」；iPhone／iPad 用「分享」再揀「加入主畫面」。</p><p class="no-print"><a href="https://tcmmacau.github.io/classics/sitemap/">網站地圖</a></p></footer><script src="assets/app.js"></script></body></html>'''
 # fix script prefix per depth handled by replacing in caller
 def main():
     if OUT.exists(): shutil.rmtree(OUT)
@@ -234,6 +234,40 @@ def main():
     cparts.append(foot().replace('src="assets/','src="../assets/'))
     (OUT/"clinical"/"index.html").write_text(''.join(cparts),encoding="utf-8")
     print(f"clinical: men={len(men_meta)}")
+
+
+    # ---------- 網站地圖 (human page) + sitemap.xml + robots.txt ----------
+    (OUT/"sitemap").mkdir(exist_ok=True)
+    sm=[head("網站地圖","../"), '<main><nav class="crumbs"><a href="../index.html">首頁</a> / 網站地圖</nav><h2>網站地圖</h2><h3>索引與工具</h3><ul class="clean">'
+         '<li><a href="../index.html">首頁</a></li><li><a href="../search.html">搜尋原文</a></li>'
+         '<li><a href="../fangji/index.html">方劑總目</a></li><li><a href="../yao/index.html">藥物總目</a></li>'
+         '<li><a href="../bingmen/index.html">病門索引</a></li><li><a href="../clinical/index.html">臨床入口</a></li></ul>'
+         '<h3>書目</h3><p class="muted">撳入書名去到該書篇目，篇目入面再去各篇原文。</p><ul class="clean">']
+    for b in META["books"]:
+        sm.append(f'<li><a href="../{b["id"]}/index.html">{html.escape(b["title"])}</a> <span class="muted">{html.escape(b["blurb"])}（{b["entries"]} 條 · {b["sections"]} 篇）</span></li>')
+    sm.append('</ul></main>'); sm.append(foot().replace('src="assets/','src="../assets/'))
+    (OUT/"sitemap"/"index.html").write_text(''.join(sm),encoding="utf-8")
+
+    BASE="https://tcmmacau.github.io/classics/"
+    urls=[]
+    for fp in sorted(OUT.rglob("*.html")):
+        rel=fp.relative_to(OUT).as_posix()
+        if rel=="patient.html":  # utility-only view (needs ?id=), not a crawlable page
+            continue
+        if rel.endswith("/index.html") or rel=="index.html":
+            loc=BASE+urllib.parse.quote(rel[: -len("index.html")])
+        else:
+            loc=BASE+urllib.parse.quote(rel)
+        urls.append(loc)
+    # homepage first, then the rest in path order
+    urls.sort(key=lambda u: (u!=BASE, u))
+    xml=['<?xml version="1.0" encoding="UTF-8"?>','<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for u in urls:
+        xml.append(f"<url><loc>{html.escape(u)}</loc></url>")
+    xml.append("</urlset>")
+    (OUT/"sitemap.xml").write_text("\n".join(xml)+"\n",encoding="utf-8")
+    (OUT/"robots.txt").write_text("User-agent: *\nAllow: /\n\nSitemap: https://tcmmacau.github.io/classics/sitemap.xml\n",encoding="utf-8")
+    print(f"sitemap: {len(urls)} urls")
 
     (OUT/"search-index.json").write_text(json.dumps(search_index,ensure_ascii=False),encoding="utf-8")
     print(f"built {len(search_index)} entries, {len(META['books'])} books -> {OUT}")

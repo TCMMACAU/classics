@@ -22,3 +22,6 @@
 - `docs/clinical/`：醫師診症查原文用；病門頁聚合原篇、相關篇目、方劑／藥物總目命中（只係索引比對）。加減升級為「證型／判斷／覆診」三欄＋修改時間，只存 localStorage（KEY 不變，舊純文字筆記同舊匯出檔相容，新匯出含結構欄位）。
 - `docs/patient.html?id=<條文編號>`：病人閱讀頁，只顯示原文同出處，列印時隱藏導航／按鈕。
 - PWA：`manifest.webmanifest`＋`sw.js`（版本 classics-v3）。只預載 app 殼、首頁、三索引、臨床入口、搜尋／病人頁同圖標；15,836 條頁面唔會一次過預載，睇過嘅頁面 runtime cache，離線可再開；search-index.json 行 network-first 保持更新。
+
+## 網站地圖
+每次 build 喺 build.py 自動生成：`docs/sitemap.xml`（2,831 條絕對網址，已排除需要 ?id= 嘅病人閱讀頁 utility）、`docs/robots.txt`（指去 sitemap）、人睇嘅 `docs/sitemap/index.html`（書目＋索引，頁尾「網站地圖」連結）。冇加 lastmod，保證重複 build 輸出一致。
