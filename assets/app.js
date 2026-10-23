@@ -4,6 +4,24 @@ const SW_URL=(document.currentScript&&document.currentScript.src)?new URL('../sw
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register(SW_URL).catch(()=>{});});}
 function loadNotes(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return{}}}
 function saveNotes(n){localStorage.setItem(KEY,JSON.stringify(n))}
+// 條文已讀：只存喺呢部機 localStorage，KEY classics-read-v1，格式 {條文編號:1}
+const READ_KEY='classics-read-v1';
+function loadRead(){try{const o=JSON.parse(localStorage.getItem(READ_KEY)||'{}');return (o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch(e){return{}}}
+function saveRead(r){localStorage.setItem(READ_KEY,JSON.stringify(r))}
+function countPrefix(r,pre){let c=0;for(const k in r){if(k.startsWith(pre))c++;}return c;}
+function renderReadProgress(){
+  const r=loadRead();
+  document.querySelectorAll('.read-progress').forEach(p=>{
+    const total=+p.dataset.total||0;
+    const n=p.dataset.page? document.querySelectorAll('.entry.is-read').length : countPrefix(r,p.dataset.prefix||'\u0000');
+    p.textContent=n? ('已讀 '+n+'／'+total+' 條'+(n>=total?' ✓':'')) : '';
+  });
+  document.querySelectorAll('.toc-item[data-prefix]').forEach(li=>{
+    const n=countPrefix(r,li.dataset.prefix), total=+li.dataset.total||0, m=li.querySelector('.read-mark'); if(!m)return;
+    m.textContent= n>=total&&total? '✓ 讀完' : (n? '已讀 '+n+'／'+total : '');
+  });
+  document.querySelectorAll('.read-count').forEach(p=>{const n=countPrefix(r,p.dataset.prefix);p.textContent=n?('已讀 '+n+'／'+p.dataset.total+' 條'):'';});
+}
 // 舊格式係純文字字串，新格式係 {證型,判斷,覆診,updated}；兩種都讀到
 function normalizeNote(v){
   if(typeof v==='string') return {'證型':'','判斷':v,'覆診':'','updated':''};
@@ -43,24 +61,36 @@ function bindExportImport(prefix){
   const exp=document.getElementById('export-notes'); if(!exp)return;
   exp.onclick=()=>{
     const raw=loadNotes(); const out={};
-    Object.keys(raw).forEach(id=>{out[id]=normalizeNote(raw[id]);});
-    const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='加減備份.json';a.click();
+    Object.keys(raw).forEach(id=>{if(id!=='__read__')out[id]=normalizeNote(raw[id]);});
+    out['__read__']=Object.keys(loadRead()).sort(); // 已讀紀錄；舊版匯出檔冇呢個鍵
+    const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='經索備份.json';a.click();
   };
   const imp=document.getElementById('import-notes'), file=document.getElementById('import-file');
   if(imp){imp.onclick=()=>file.click(); file.onchange=()=>{const f=file.files[0]; if(!f)return; f.text().then(t=>{try{
       const obj=JSON.parse(t); if(typeof obj!=='object'||Array.isArray(obj))throw 0;
-      const clean={};
+      const clean={}; let read=null;
+      if(Object.prototype.hasOwnProperty.call(obj,'__read__')){
+        if(!Array.isArray(obj.__read__))throw 0;
+        read={}; obj.__read__.forEach(id=>{if(typeof id==='string'&&id)read[id]=1;});
+        delete obj.__read__;
+      }
       for(const [id,v] of Object.entries(obj)){
         if(typeof v==='string') clean[id]=v;
         else if(v&&typeof v==='object'&&!Array.isArray(v)) clean[id]=normalizeNote(v);
         else throw 0;
       }
-      saveNotes(clean); location.reload();
+      saveNotes(clean); if(read)saveRead(read); location.reload();
     }catch(e){alert('檔案格式唔啱');}});};}
 }
 document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.entry').forEach(el=>{
     const id=el.dataset.id; renderNote(el,id);
+    const rb=el.querySelector('.read-btn');
+    if(rb){
+      const setR=on=>{rb.setAttribute('aria-pressed',on?'true':'false');el.classList.toggle('is-read',on);rb.title=on?'再撳取消已讀':'撳一下標記已讀';};
+      setR(!!loadRead()[id]);
+      rb.addEventListener('click',()=>{const r=loadRead(); const on=!r[id]; if(on)r[id]=1; else delete r[id]; saveRead(r); setR(on); renderReadProgress();});
+    }
     const btn=el.querySelector('.note-btn'); if(!btn)return;
     btn.addEventListener('click',()=>{
       const area=el.querySelector('.note-area'); const cur=normalizeNote(loadNotes()[id]);
@@ -83,6 +113,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
   });
   renderHomeNotes();
+  renderReadProgress();
   bindExportImport();
   // 臨床頁：覆診快速開啟（按最後修改排序，連去條文錨點）
   const clinicalList=document.getElementById('clinical-notes');

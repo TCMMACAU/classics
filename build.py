@@ -38,9 +38,9 @@ def main():
     book_pages={}
     for b in META["books"]:
         total+=b["entries"]
-        cards.append(f'<a class="card" href="{b["id"]}/index.html"><h2>{html.escape(b["title"])}</h2><p class="muted">{html.escape(b["blurb"])}</p><p class="count">{b["entries"]} 條 · {b["sections"]} 篇</p></a>')
+        cards.append(f'<a class="card" href="{b["id"]}/index.html"><h2>{html.escape(b["title"])}</h2><p class="muted">{html.escape(b["blurb"])}</p><p class="count">{b["entries"]} 條 · {b["sections"]} 篇</p><p class="read-count" data-prefix="{b["id"]}-" data-total="{b["entries"]}"></p></a>')
     home=head("經典原文","")+f'''<main><form class="searchbar" action="search.html"><input name="q" placeholder="桂枝湯、甘草、不寐、丹沙"><button>搜尋</button></form>
-<section><h2>我嘅加減</h2><p class="muted">只留喺呢部機。有連結嘅人睇唔到。可匯出／匯入備份。</p><ul class="clean" id="my-notes"></ul><button class="btn" id="export-notes">匯出加減</button> <button class="btn" id="import-notes">匯入加減</button><input type="file" id="import-file" accept="application/json" hidden></section>
+<section><h2>我嘅加減</h2><p class="muted">只留喺呢部機。有連結嘅人睇唔到。可匯出／匯入備份，備份會連埋條文「已讀」紀錄。</p><ul class="clean" id="my-notes"></ul><button class="btn" id="export-notes">匯出加減</button> <button class="btn" id="import-notes">匯入加減</button><input type="file" id="import-file" accept="application/json" hidden></section>
 <section><h2>索引</h2><div class="grid"><a class="card" href="fangji/index.html"><h3>方劑總目</h3><p class="muted">按方名回查條文出處</p></a><a class="card" href="yao/index.html"><h3>藥物總目</h3><p class="muted">以《神農本草經》藥名為綱</p></a><a class="card" href="bingmen/index.html"><h3>病門索引</h3><p class="muted">以《臨證指南醫案》門類為綱</p></a><a class="card" href="clinical/index.html"><h3>臨床入口</h3><p class="muted">診症時查原文用；不作自動辨證</p></a></div></section><p class="muted">共 {len(META["books"])} 本書 · {total} 條</p><div class="grid">{''.join(cards)}</div></main>'''+foot()
     # homepage foot script already correct
     (OUT/"index.html").write_text(home,encoding="utf-8")
@@ -66,11 +66,13 @@ def main():
         groups={}
         for fm,entries,stem in sections:
             groups.setdefault(fm.get("group",""),[]).append((fm,entries,stem))
-        parts=[head(b["title"],"../"), f'<main><nav class="crumbs"><a href="../index.html">首頁</a> / {html.escape(b["title"])}</nav><h2>{html.escape(b["title"])}</h2><p class="muted">{html.escape(b["blurb"])}</p><p><strong>底本：</strong>{html.escape(b["base_edition"])}</p>{('<p><strong>作者：</strong>'+html.escape(b['author'])+'</p>') if b.get('author') else ''}{('<p><strong>來源：</strong><a href="'+html.escape(b['source_url'])+'">'+html.escape(b.get('source_name',''))+'</a></p>') if b.get('source_url') else ''}<p class="count">{b["entries"]} 條 · {len(sections)} 篇</p>']
+        parts=[head(b["title"],"../"), f'<main><nav class="crumbs"><a href="../index.html">首頁</a> / {html.escape(b["title"])}</nav><h2>{html.escape(b["title"])}</h2><p class="muted">{html.escape(b["blurb"])}</p><p><strong>底本：</strong>{html.escape(b["base_edition"])}</p>{('<p><strong>作者：</strong>'+html.escape(b['author'])+'</p>') if b.get('author') else ''}{('<p><strong>來源：</strong><a href="'+html.escape(b['source_url'])+'">'+html.escape(b.get('source_name',''))+'</a></p>') if b.get('source_url') else ''}<p class="count">{b["entries"]} 條 · {len(sections)} 篇</p><p class="read-progress" data-prefix="{b["id"]}-" data-total="{b["entries"]}"></p>']
         for gname, secs in groups.items():
             parts.append(f'<h3>{html.escape(gname)}</h3><ul class="clean">')
             for fm,entries,stem in secs:
-                parts.append(f'<li><a href="{stem}.html">{html.escape(fm.get("section",""))}</a> <span class="muted">（{len(entries)} 條）</span></li>')
+                pre=(entries[0]["id"].rsplit("-",1)[0]+"-") if entries and all(e["id"].rsplit("-",1)[0]==entries[0]["id"].rsplit("-",1)[0] for e in entries) else ""
+                attr=(' data-prefix="'+html.escape(pre)+'" data-total="'+str(len(entries))+'"') if pre else ''
+                parts.append(f'<li class="toc-item"{attr}><a href="{stem}.html">{html.escape(fm.get("section",""))}</a> <span class="muted">（{len(entries)} 條）</span> <span class="read-mark"></span></li>')
             parts.append('</ul>')
         parts.append('</main>')
         parts.append(foot().replace('src="assets/','src="../assets/'))
@@ -81,9 +83,9 @@ def main():
             prev_link=f'<a href="{sections[idx-1][2]}.html">← 上一篇</a> ' if idx>0 else ''
             next_link=f' <a href="{sections[idx+1][2]}.html">下一篇 →</a>' if idx < len(sections)-1 else ''
             body=[head(f'{fm.get("section","")}｜{b["title"]}',"../"),
-              f'<main><nav class="crumbs"><a href="../index.html">首頁</a> / <a href="index.html">{html.escape(b["title"])}</a> / {html.escape(fm.get("group",""))}</nav><h2>{html.escape(fm.get("section",""))}</h2><p class="muted">{html.escape(b["title"])} · {html.escape(fm.get("group",""))}</p><p>{prev_link}{next_link}</p>']
+              f'<main><nav class="crumbs"><a href="../index.html">首頁</a> / <a href="index.html">{html.escape(b["title"])}</a> / {html.escape(fm.get("group",""))}</nav><h2>{html.escape(fm.get("section",""))}</h2><p class="muted">{html.escape(b["title"])} · {html.escape(fm.get("group",""))}</p><p class="read-progress" data-page="1" data-total="{len(entries)}"></p><p>{prev_link}{next_link}</p>']
             for e in entries:
-                body.append(f'<article class="entry" id="{e["id"]}" data-id="{e["id"]}"><span class="no">{html.escape(e["no"])}</span>{html.escape(e["text"])}<button class="note-btn" type="button">加減</button><a class="print-link" href="../patient.html?id={e["id"]}">病人閱讀頁</a><div class="note-area"></div></article>')
+                body.append(f'<article class="entry" id="{e["id"]}" data-id="{e["id"]}"><span class="no">{html.escape(e["no"])}</span>{html.escape(e["text"])}<button class="read-btn" type="button" aria-pressed="false">已讀</button><button class="note-btn" type="button">加減</button><a class="print-link" href="../patient.html?id={e["id"]}">病人閱讀頁</a><div class="note-area"></div></article>')
             body.append(f'<p>{prev_link}{next_link}</p></main>')
             body.append(foot().replace('src="assets/','src="../assets/'))
             (OUT/b["id"]/f"{stem}.html").write_text(''.join(body),encoding="utf-8")
