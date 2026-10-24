@@ -18,13 +18,17 @@
 ## 新增書（2026-10-17）
 難經、溫熱論、濕熱病篇、脈經、針灸大成、本草備要，來源皆為維基文庫公有領域古籍頁，逐本底本／作者／來源連結記喺 books.json 各書條目。溫熱論只錄原頁編號條文一至三十七（現代編者「總論」不錄）；本草備要來源為簡體轉錄，入站時以 OpenCC 機械轉繁；針灸大成原頁若干生僻字為 Unicode 私用區碼（原站標示未能識別），轉錄以「□」標示。
 
+
+## 新增書（2026-10-24）
+類經、醫學心悟、脾胃論、醫宗金鑒、景岳全書。脾胃論、醫學心悟用維基文庫通行頁；類經、景岳全書、醫宗金鑒用四庫全書本逐卷轉錄。醫學心悟原頁為簡體，入站時 OpenCC 轉繁；維基文庫本僅見卷一至卷五（無卷六）。四庫本無現代標點，條文依篇題／段落切分，私用區缺字以「□」標示。底本／作者／來源記喺 books.json。
+
 ## 臨床入口與可安裝版（2026-10-17）
 - `docs/clinical/`：醫師診症查原文用；病門頁聚合原篇、相關篇目、方劑／藥物總目命中（只係索引比對）。加減升級為「證型／判斷／覆診」三欄＋修改時間，只存 localStorage（KEY 不變，舊純文字筆記同舊匯出檔相容，新匯出含結構欄位）。
 - `docs/patient.html?id=<條文編號>`：病人閱讀頁，只顯示原文同出處，列印時隱藏導航／按鈕。
-- PWA：`manifest.webmanifest`＋`sw.js`（版本 classics-v4）。只預載 app 殼、首頁、三索引、臨床入口、搜尋／病人頁同圖標；15,836 條頁面唔會一次過預載，睇過嘅頁面 runtime cache，離線可再開；search-index.json 行 network-first 保持更新。
+- PWA：`manifest.webmanifest`＋`sw.js`（版本 classics-v5）。只預載 app 殼、首頁、三索引、臨床入口、搜尋／病人頁同圖標；15,836 條頁面唔會一次過預載，睇過嘅頁面 runtime cache，離線可再開；search-index.json 行 network-first 保持更新。
 
 ## 網站地圖
-每次 build 喺 build.py 自動生成：`docs/sitemap.xml`（2,831 條絕對網址，已排除需要 ?id= 嘅病人閱讀頁 utility）、`docs/robots.txt`（指去 sitemap）、人睇嘅 `docs/sitemap/index.html`（書目＋索引，頁尾「網站地圖」連結）。冇加 lastmod，保證重複 build 輸出一致。
+每次 build 喺 build.py 自動生成：`docs/sitemap.xml`（約 22,484 條絕對網址，已排除需要 ?id= 嘅病人閱讀頁 utility）、`docs/robots.txt`（指去 sitemap）、人睇嘅 `docs/sitemap/index.html`（書目＋索引，頁尾「網站地圖」連結）。冇加 lastmod，保證重複 build 輸出一致。
 
 ## 條文已讀（2026-10-23）
 每條條文有「已讀」掣，自己撳先記，只存 localStorage `classics-read-v1`（`{條文編號:1}`），唔會上傳。篇頁顯示「已讀 x／y 條」，書目篇目顯示每篇進度（讀完顯示 ✓），首頁書卡顯示該書已讀條數。首頁匯出 JSON 喺加減之外多一個保留鍵 `__read__`（已讀條文編號陣列）；舊匯出檔冇呢個鍵照樣匯入得，唔會清走現有已讀紀錄。列印時隱藏已讀掣。
