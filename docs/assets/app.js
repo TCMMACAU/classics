@@ -82,6 +82,95 @@ function bindExportImport(prefix){
       saveNotes(clean); if(read)saveRead(read); location.reload();
     }catch(e){alert('檔案格式唔啱');}});};}
 }
+
+// 朗讀：用系統 Web Speech，偏好粵語（zh-HK / yue）；唔支援就隱藏掣。只讀單條，唔連讀成篇。
+let speakingEl=null, cantoneseTipShown=false;
+function speechSupported(){return typeof window!=='undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance!=='undefined';}
+function pickVoice(){
+  const voices=speechSynthesis.getVoices()||[];
+  const langs=voices.map(v=>({v, lang:(v.lang||'').toLowerCase(), name:(v.name||'')}));
+  const prefer=['zh-hk','yue-hk','yue','zh-yue'];
+  for(const p of prefer){
+    const hit=langs.find(x=>x.lang===p || x.lang.startsWith(p+'-') || x.lang.startsWith(p));
+    if(hit) return {voice:hit.v, cantonese:true};
+  }
+  const byName=langs.find(x=>/cantonese|粵語|香港|hong\s*kong|\byue\b/i.test(x.name));
+  if(byName) return {voice:byName.v, cantonese:true};
+  const tw=langs.find(x=>x.lang==='zh-tw'||x.lang.startsWith('zh-tw'));
+  if(tw) return {voice:tw.v, cantonese:false};
+  const cn=langs.find(x=>x.lang==='zh-cn'||x.lang.startsWith('zh-cn')||x.lang.startsWith('zh'));
+  if(cn) return {voice:cn.v, cantonese:false};
+  return {voice:null, cantonese:false};
+}
+function entrySpeakText(el){
+  const clone=el.cloneNode(true);
+  clone.querySelectorAll('.read-btn,.note-btn,.speak-btn,.print-link,.note-area,.no,.saved-note,.note-box').forEach(n=>n.remove());
+  return (clone.textContent||'').replace(/\s+/g,' ').trim();
+}
+function stopSpeaking(){
+  try{speechSynthesis.cancel();}catch(e){}
+  if(speakingEl){
+    speakingEl.classList.remove('is-speaking');
+    const b=speakingEl.querySelector('.speak-btn');
+    if(b){b.textContent='朗讀';b.setAttribute('aria-pressed','false');}
+    speakingEl=null;
+  }
+}
+function showCantoneseTip(nearEl){
+  if(cantoneseTipShown) return;
+  cantoneseTipShown=true;
+  const tip=document.createElement('p');
+  tip.className='muted speak-tip';
+  tip.textContent='提示：系統未搵到粵語聲，而家可能用普通話讀。iPhone／Android 請喺系統「朗讀／文字轉語音」設定揀粵語（廣東話）。';
+  const main=nearEl.closest('main')||nearEl.parentElement;
+  if(main){
+    const first=main.querySelector('.entry');
+    if(first) main.insertBefore(tip, first);
+    else main.prepend(tip);
+  }
+}
+function speakEntry(el){
+  if(!speechSupported()) return;
+  if(speakingEl===el){stopSpeaking();return;}
+  stopSpeaking();
+  const text=entrySpeakText(el);
+  if(!text) return;
+  // Chrome 有時要等 voiceschanged；先試一次，空就等一下再試
+  const go=()=>{
+    const {voice,cantonese}=pickVoice();
+    if(!cantonese){
+      const b=el.querySelector('.speak-btn');
+      if(b) b.title='請喺系統設定揀粵語（廣東話）聲；而家可能用普通話讀';
+      showCantoneseTip(el);
+    }
+    const u=new SpeechSynthesisUtterance(text);
+    if(voice){u.voice=voice;u.lang=voice.lang||'zh-HK';}
+    else u.lang='zh-HK';
+    u.rate=1; u.pitch=1;
+    const clear=()=>{
+      if(speakingEl===el){
+        el.classList.remove('is-speaking');
+        const b=el.querySelector('.speak-btn');
+        if(b){b.textContent='朗讀';b.setAttribute('aria-pressed','false');}
+        speakingEl=null;
+      }
+    };
+    u.onend=clear; u.onerror=clear;
+    speakingEl=el;
+    el.classList.add('is-speaking');
+    const b=el.querySelector('.speak-btn');
+    if(b){b.textContent='停止';b.setAttribute('aria-pressed','true');}
+    speechSynthesis.speak(u);
+  };
+  if((speechSynthesis.getVoices()||[]).length) go();
+  else{
+    let started=false;
+    const kick=()=>{if(started)return;started=true;speechSynthesis.removeEventListener('voiceschanged',kick);go();};
+    speechSynthesis.addEventListener('voiceschanged',kick);
+    setTimeout(kick,400);
+  }
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.entry').forEach(el=>{
     const id=el.dataset.id; renderNote(el,id);
@@ -90,6 +179,14 @@ document.addEventListener('DOMContentLoaded',()=>{
       const setR=on=>{rb.setAttribute('aria-pressed',on?'true':'false');el.classList.toggle('is-read',on);rb.title=on?'再撳取消已讀':'撳一下標記已讀';};
       setR(!!loadRead()[id]);
       rb.addEventListener('click',()=>{const r=loadRead(); const on=!r[id]; if(on)r[id]=1; else delete r[id]; saveRead(r); setR(on); renderReadProgress();});
+    }
+    const sb=el.querySelector('.speak-btn');
+    if(sb){
+      if(!speechSupported()){sb.hidden=true;sb.disabled=true;sb.title='呢個瀏覽器唔支援朗讀';}
+      else{
+        sb.title='用系統聲朗讀呢條（偏好粵語）';
+        sb.addEventListener('click',()=>speakEntry(el));
+      }
     }
     const btn=el.querySelector('.note-btn'); if(!btn)return;
     btn.addEventListener('click',()=>{

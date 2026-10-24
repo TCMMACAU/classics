@@ -85,7 +85,7 @@ def main():
             body=[head(f'{fm.get("section","")}｜{b["title"]}',"../"),
               f'<main><nav class="crumbs"><a href="../index.html">首頁</a> / <a href="index.html">{html.escape(b["title"])}</a> / {html.escape(fm.get("group",""))}</nav><h2>{html.escape(fm.get("section",""))}</h2><p class="muted">{html.escape(b["title"])} · {html.escape(fm.get("group",""))}</p><p class="read-progress" data-page="1" data-total="{len(entries)}"></p><p>{prev_link}{next_link}</p>']
             for e in entries:
-                body.append(f'<article class="entry" id="{e["id"]}" data-id="{e["id"]}"><span class="no">{html.escape(e["no"])}</span>{html.escape(e["text"])}<button class="read-btn" type="button" aria-pressed="false">已讀</button><button class="note-btn" type="button">加減</button><a class="print-link" href="../patient.html?id={e["id"]}">病人閱讀頁</a><div class="note-area"></div></article>')
+                body.append(f'<article class="entry" id="{e["id"]}" data-id="{e["id"]}"><span class="no">{html.escape(e["no"])}</span>{html.escape(e["text"])}<button class="read-btn" type="button" aria-pressed="false">已讀</button><button class="speak-btn" type="button" aria-pressed="false">朗讀</button><button class="note-btn" type="button">加減</button><a class="print-link" href="../patient.html?id={e["id"]}">病人閱讀頁</a><div class="note-area"></div></article>')
             body.append(f'<p>{prev_link}{next_link}</p></main>')
             body.append(foot().replace('src="assets/','src="../assets/'))
             (OUT/b["id"]/f"{stem}.html").write_text(''.join(body),encoding="utf-8")

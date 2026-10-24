@@ -1,5 +1,5 @@
 // 經典原文 service worker：殼同索引先裝，睇過嘅頁面自動快取，搜尋索引行 network-first
-const CACHE='classics-v5';
+const CACHE='classics-v6';
 const SHELL=['./','index.html','assets/style.css','assets/app.js','manifest.webmanifest','search.html','patient.html','fangji/index.html','yao/index.html','bingmen/index.html','clinical/index.html','icons/icon-192.png','icons/icon-512.png'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));
